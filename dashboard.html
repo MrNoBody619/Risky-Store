@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - Digital Store</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg-body: #f1f5f9;
+            --bg-sidebar: #1e293b;
+            --text-sidebar: #cbd5e1;
+            --white: #ffffff;
+            --text-dark: #334155;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: fixed;
+            height: 100%;
+            z-index: 1001;
+        }
+
+        .sidebar.collapsed {
+            left: -260px;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 1rem 0;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu li {
+            padding: 0.5rem 1.5rem;
+        }
+
+        .sidebar-menu a {
+            color: var(--text-sidebar);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        /* Main Content */
+        .main-container {
+            flex-grow: 1;
+            margin-left: 260px;
+            transition: all 0.3s ease;
+            width: calc(100% - 260px);
+        }
+
+        .main-container.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Top Bar */
+        .topbar {
+            height: 70px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .menu-toggle {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-logout {
+            color: #ef4444;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Dashboard Content */
+        .content {
+            padding: 2rem;
+        }
+
+        .header-section {
+            margin-bottom: 2rem;
+        }
+
+        .header-section h1 {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+        }
+
+        /* Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-label {
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chart-header {
+            margin-bottom: 1rem;
+        }
+
+        .chart-header h3 {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+
+        .chart-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* Table Section */
+        .table-container {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        table th {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .status-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-pending { background: #fef9c3; color: #854d0e; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                left: -260px;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-store"></i>
+            <span>DIGITAL.CO</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="#"><i class="fas fa-box"></i> Produk</a></li>
+            <li><a href="#"><i class="fas fa-exchange-alt"></i> Transaksi</a></li>
+            <li><a href="#"><i class="fas fa-chart-line"></i> Laporan</a></li>
+            <li><a href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
+        </ul>
+    </aside>
+
+    <div class="main-container" id="mainContainer">
+        <!-- 2. Top Bar -->
+        <header class="topbar">
+            <div class="menu-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="user-info">
+                <span style="font-weight: 500;">Admin Toko</span>
+                <img src="https://ui-avatars.com/api/?name=Admin+Toko&background=2563eb&color=fff" alt="User" style="width: 35px; border-radius: 50%;">
+                <a href="#" class="btn-logout">Logout</a>
+            </div>
+        </header>
+
+        <!-- 3. Main Content -->
+        <main class="content">
+            <div class="header-section">
+                <h1>Dashboard Overview</h1>
+                <p style="color: #64748b;">Selamat datang kembali, mari pantau performa toko Anda.</p>
+            </div>
+
+            <!-- Ringskasan Card -->
+            <div class="stats-grid">
+                <div class="card">
+                    <span class="card-label">Total Penjualan</span>
+                    <span class="card-value">Rp 12.450.000</span>
+                    <small style="color: #10b981; margin-top: 5px;"><i class="fas fa-arrow-up"></i> +12% bulan ini</small>
+                </div>
+                <div class="card">
+                    <span class="card-label">Total Transaksi</span>
+                    <span class="card-value">1,240</span>
+                    <small style="color: #10b981; margin-top: 5px;"><i class="fas fa-arrow-up"></i> +5.4%</small>
+                </div>
+                <div class="card">
+                    <span class="card-label">Produk Terjual</span>
+                    <span class="card-value">856</span>
+                    <small style="color: #64748b; margin-top: 5px;">Dari 12 listing aktif</small>
+                </div>
+            </div>
+
+            <!-- 4. Charts Section -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Penjualan 1 Bulan Terakhir</h3>
+                        <p>Data harian total pendapatan (Rupiah)</p>
+                    </div>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Penjualan 7 Hari Terakhir</h3>
+                        <p>Total unit produk digital yang terjual</p>
+                    </div>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 5. Tabel Transaksi -->
+            <div class="table-container">
+                <div class="chart-header">
+                    <h3>Transaksi Terbaru</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Produk</th>
+                            <th>Email</th>
+                            <th>Nomor HP</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#DE-171440001</td>
+                            <td>Digital Asset Kopi</td>
+                            <td>budi@gmail.com</td>
+                            <td>08123456789</td>
+                            <td><span class="status-pill status-success">Berhasil</span></td>
+                        </tr>
+                        <tr>
+                            <td>#DE-171440002</td>
+                            <td>E-Book Rahasia Keripik</td>
+                            <td>siti.aminah@mail.com</td>
+                            <td>08527788990</td>
+                            <td><span class="status-pill status-success">Berhasil</span></td>
+                        </tr>
+                        <tr>
+                            <td>#DE-171440003</td>
+                            <td>Masterclass Digital</td>
+                            <td>rudi_dev@outlook.com</td>
+                            <td>08215566332</td>
+                            <td><span class="status-pill status-pending">Menunggu</span></td>
+                        </tr>
+                        <tr>
+                            <td>#DE-171440004</td>
+                            <td>Digital Asset Kopi</td>
+                            <td>ani_creative@yahoo.com</td>
+                            <td>08990011223</td>
+                            <td><span class="status-pill status-success">Berhasil</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (window.innerWidth > 1024) {
+                sidebar.classList.toggle('collapsed');
+                mainContainer.classList.toggle('expanded');
+            } else {
+                sidebar.classList.toggle('active');
+            }
+        }
+
+        // Initialize Charts
+        window.onload = function() {
+            // 1 Month Chart (Line Chart)
+            const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+            new Chart(ctxMonthly, {
+                type: 'line',
+                data: {
+                    labels: ['1 Apr', '5 Apr', '10 Apr', '15 Apr', '20 Apr', '25 Apr', '30 Apr'],
+                    datasets: [{
+                        label: 'Pendapatan (Juta Rp)',
+                        data: [1.2, 2.5, 1.8, 3.2, 2.9, 4.5, 5.1],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // 7 Days Chart (Bar Chart)
+            const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+            new Chart(ctxWeekly, {
+                type: 'bar',
+                data: {
+                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                    datasets: [{
+                        label: 'Unit Terjual',
+                        data: [12, 19, 15, 8, 22, 30, 25],
+                        backgroundColor: '#38bdf8',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        };
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.querySelector('.menu-toggle');
+            
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
